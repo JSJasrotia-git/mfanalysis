@@ -10,7 +10,7 @@ import { Inttakeaways, Intmfdetails } from '../interfaces/intdateprice';
   providedIn: 'root'
 })
 export class Readjson {
-  private readonly _path = '../../assets/';
+  private readonly _path = '../assets/';
   private readonly _fileext = '.json';
   private _jsonfiletoread:string =  this._path+"1"+this._fileext; //'../../assets/1.json';
   public _jsonData: any = null; // local variable to hold data
