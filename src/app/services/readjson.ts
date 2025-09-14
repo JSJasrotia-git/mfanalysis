@@ -1,36 +1,42 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Intdateprice } from '../interfaces/intdateprice';
-import { catchError, of } from 'rxjs';
-import { Inttakeaways, Intmfdetails } from '../interfaces/intdateprice';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Readjson {
-  private readonly _path = '../assets/';
-  private readonly _fileext = '.json';
-  private _jsonfiletoread:string =  this._path+"1"+this._fileext; //'../../assets/1.json';
-  public _jsonData: any = null; // local variable to hold data
-  //Constructor.
-  constructor(private http: HttpClient){
-  this._jsonfiletoread =  this._path+"1"+this._fileext;
-    //console.log(this._jsonfiletoread)
+  private readonly _baseUrl = 'https://api.mfapi.in/mf/';
+  private _filename: string = '100027';
+
+  constructor(private http: HttpClient) {}
+
+  // Set the filename (scheme number)
+  setFilename(filename: string) {
+    this._filename = filename;
+    console.log("set the ")
   }
-  getfilename(_fileName: string){
-    this._jsonfiletoread = this._path+_fileName+this._fileext;
-    //Check if File exists.
-    return this.http.head(this._jsonfiletoread, { observe: 'response' }).pipe(
-      catchError(() => of(null)) // Return null if not found or error
+
+  // Get the current URL to fetch data from
+  private get apiUrl(): string {
+    return `${this._baseUrl}${this._filename}`;
+  }
+
+  // Optional: check if the endpoint exists - uses HTTP HEAD or GET with error handling
+  checkIfExists(): Observable<boolean | null> {
+  return this.http.get(this.apiUrl).pipe(
+    map(_ => true),               // if GET succeeds, emit true
+    catchError(_ => of(null))     // if GET fails, emit null (or false if you prefer)
+  );
+  }
+
+
+  // Get the data from the API endpoint, typed as an observable of Intdateprice array or any shape matching the API
+  getData(): Observable<any> {
+    return this.http.get<any>(this.apiUrl).pipe(
+      catchError(() => of(null))
     );
-    
-
   }
-  //function to read the file.
-   getData(): Observable<Intdateprice[]> {
-   return this.http.get<Intdateprice[]>(this._jsonfiletoread);
-  }
-
 }

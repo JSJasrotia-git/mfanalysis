@@ -40,114 +40,27 @@ export class Midleft implements OnInit{
         return;
        }
     //Validation for Num of days
-      if (!Number.isNaN(Number(Numofdays)) && (Number(Numofdays) >= 2) && (Number(Numofdays) <= 1000)) {
+      if (!Number.isNaN(Number(Numofdays)) && (Number(Numofdays) >= 2)) {
         //we can move fwd, else we need to provide an error and return
       } else {
         alert("Please enter valid number of days between 2 and 1000");
         return;
       }
       //Check if the file exists or not
-      this._filename.getfilename(MfNum).subscribe(response => {
+      this._filename.setFilename(MfNum);
+      //Check if the backend API is giving a response.
+      if(this._filename.checkIfExists()){
+        alert("Sorry no data received from the backend service.")
+      }
+      //check the data provided by this API
+      this._filename.getData().subscribe(response => {
         if (response === null) {
           alert("Sorry Data does not exist for this MF Code");
           return;
         }
-      });
-      if (this.takeaways.length > 0) {
-        this.takeaways.length = 0;   // Clear all elements from takeaways
-      }
-
-      if (this.mfdetails.length > 0) {
-        this.mfdetails.length = 0;   // Clear all elements from mfdetails
-      }
-
-      this._numofdays = Number(Numofdays);
-      this._mfnum = Number(MfNum);
-      this.fillmfdata(this._mfnum); //Call a function to load the data
-      this.loadData();
-  }
-  
-    async loadData() {
-      this.data = await firstValueFrom(this._filename.getData());
-      this.calculateRollingRet();
-    }  
-// Function to set background color based on the rolling return value
-    getRollingRetColor(rollingret: string): string {
-      if (rollingret === 'N.A') return 'grey';
-      return parseFloat(rollingret) > 0 ? 'green' : 'red';
-    }
-
-    //function to call rolling return
-    calculateRollingRet() {
-      let arraylength: number = this.data.length;
-      let positivevals: number = 0;
-      let negativevals: number = 0;
-      console.log("value of negativevals is : " + negativevals);
-      if(this.data.length <= this._numofdays){
-        alert("Pls provide a lower number of days for Rolling return. Data in the fund is less than the #of days of Rolling Return");
-        return;
-      }
-      for (let i = 0; i < (this.data.length); i++) {
-        if(i <= (this.data.length - (this._numofdays+1))){
-          const currentNav = parseFloat(this.data[i].nav);
-          const nextNav = parseFloat(this.data[i + this._numofdays].nav);
-          // Calculate rollingret as difference (current - next)
-          this.data[i].rollingret = (currentNav - nextNav).toFixed(5);
-          // Calculate takeaways
-          if ((currentNav - nextNav) > 0) {
-            positivevals += 1;
-          }else {
-            negativevals += 1;
-          } 
-        }else{
-          this.data[i].rollingret = 'N.A';
+        else {
+          console.log (response);
         }
-      }
-      // Handle last item explicitly if needed
-      if (this.data.length > 0) {
-        this.data[this.data.length - 1].rollingret = 'N.A'; // or whatever default
-      }
-      let loctakeaway: Inttakeaways[] = [];
-      loctakeaway.push( {
-        rollingretdays: this._numofdays,
-        totdatapoints: arraylength,
-        applicabledatapoints: (arraylength - this._numofdays),
-        postiverollingreturn: positivevals,
-        negativeRollingReturns: negativevals,
-        notapplicableRollingReturns: this._numofdays
       });
-      this.takeaways.push(...loctakeaway);
-      //build final message to show
-      this._finaltexttoshow = this._beginingtexttoshow + (((loctakeaway[0].negativeRollingReturns*100)/loctakeaway[0].applicabledatapoints).toFixed(2)) + this._endingtexttoshow +loctakeaway[0].rollingretdays+ " days";
-  }
-
-  ///for splitting the data into 2
-  get leftData(): any[] {
-  return this.data.slice(0, Math.ceil(this.data.length / 2));
-  }
-
-  get rightData(): any[] {
-  return this.data.slice(Math.ceil(this.data.length / 2));
-  }
-
-
-  //Call a function to load the data
-  fillmfdata(mfnum: number) {
-    // Implementation for filling MF data
-    // Check the record id that matces with the current MFNum
-    for (let i = 0; i < this._mfdata.length; i++) {
-      if (Number(this._mfdata[i].schemecode) == mfnum) {
-        let locmfdetails: Intmfdetails[] = [];
-          locmfdetails.push({
-            schemecode: this._mfdata[i].schemecode,
-            schemename: this._mfdata[i].schemename,
-            schemecategory: this._mfdata[i].schemecategory,
-            date: this._mfdata[i].latestnavdate,
-            nav: this._mfdata[i].latestnav
-          });
-          this.mfdetails.push(...locmfdetails);
-        return;
-      }
-      }
-  }
+    }
 }
